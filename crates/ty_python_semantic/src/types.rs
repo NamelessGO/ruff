@@ -789,18 +789,7 @@ impl<'db> Type<'db> {
                 .copied()
                 .any(|ty| ty.any_over_type(db, type_fn)),
 
-            Self::Callable(callable) => {
-                let signatures = callable.signatures(db);
-                signatures.iter().any(|signature| {
-                    signature.parameters().iter().any(|param| {
-                        param
-                            .annotated_type()
-                            .is_some_and(|ty| ty.any_over_type(db, type_fn))
-                    }) || signature
-                        .return_ty
-                        .is_some_and(|ty| ty.any_over_type(db, type_fn))
-                })
-            }
+            Self::Callable(callable) => callable.any_over_type(db, type_fn),
 
             Self::SubclassOf(subclass_of) => {
                 Type::from(subclass_of.subclass_of()).any_over_type(db, type_fn)
@@ -1445,8 +1434,7 @@ impl<'db> Type<'db> {
                 .is_some_and(|instance| instance.has_relation_to(db, target, relation)),
 
             (Type::FunctionLiteral(self_function_literal), Type::Callable(_)) => {
-                self_function_literal
-                    .into_callable_type(db)
+                Type::Callable(self_function_literal.into_callable_type(db))
                     .has_relation_to(db, target, relation)
             }
 
@@ -7308,6 +7296,18 @@ impl<'db> CallableType<'db> {
             && self
                 .signatures(db)
                 .is_equivalent_to(db, other.signatures(db))
+    }
+
+    fn any_over_type(self, db: &'db dyn Db, type_fn: &dyn Fn(Type<'db>) -> bool) -> bool {
+        self.signatures(db).iter().any(|signature| {
+            signature.parameters().iter().any(|param| {
+                param
+                    .annotated_type()
+                    .is_some_and(|ty| ty.any_over_type(db, type_fn))
+            }) || signature
+                .return_ty
+                .is_some_and(|ty| ty.any_over_type(db, type_fn))
+        })
     }
 }
 

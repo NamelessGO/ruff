@@ -255,7 +255,7 @@ impl<'db> ProtocolMemberData<'db> {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, salsa::Update, Hash)]
 enum ProtocolMemberKind<'db> {
-    Method(Type<'db>), // TODO: use CallableType
+    Method(CallableType<'db>),
     Property(PropertyInstanceType<'db>),
     Other(Type<'db>),
 }
@@ -335,7 +335,7 @@ impl<'a, 'db> ProtocolMember<'a, 'db> {
 
     fn ty(&self) -> Type<'db> {
         match &self.kind {
-            ProtocolMemberKind::Method(callable) => *callable,
+            ProtocolMemberKind::Method(callable) => Type::Callable(*callable),
             ProtocolMemberKind::Property(property) => Type::PropertyInstance(*property),
             ProtocolMemberKind::Other(ty) => *ty,
         }
@@ -490,13 +490,10 @@ fn cached_protocol_interface<'db>(
                         (Type::Callable(callable), BoundOnClass::Yes)
                             if callable.is_function_like(db) =>
                         {
-                            ProtocolMemberKind::Method(ty)
+                            ProtocolMemberKind::Method(callable)
                         }
-                        // TODO: method members that have `FunctionLiteral` types should be upcast
-                        // to `CallableType` so that two protocols with identical method members
-                        // are recognized as equivalent.
-                        (Type::FunctionLiteral(_function), BoundOnClass::Yes) => {
-                            ProtocolMemberKind::Method(ty)
+                        (Type::FunctionLiteral(function), BoundOnClass::Yes) => {
+                            ProtocolMemberKind::Method(function.into_callable_type(db))
                         }
                         _ => ProtocolMemberKind::Other(ty),
                     };
