@@ -1,6 +1,19 @@
 use ruff_db::vendored::VendoredFileSystem;
 use std::sync::LazyLock;
 
+/// The source commit of the vendored typeshed.
+#[expect(unsafe_code)]
+pub const SOURCE_COMMIT: &str = unsafe {
+    let (source_commit, _newline) = SOURCE_COMMIT_BYTES.split_at(40);
+    std::str::from_utf8_unchecked(source_commit)
+};
+
+/// The source commit of the vendored typeshed as bytes, including the newline.
+///
+/// Note that this ensures that the file actually contains a git commit.
+const SOURCE_COMMIT_BYTES: &[u8; 41] =
+    include_bytes!("../../../crates/ty_vendored/vendor/typeshed/source_commit.txt");
+
 // The file path here is hardcoded in this crate's `build.rs` script.
 // Luckily this crate will fail to build if this file isn't available at build time.
 static TYPESHED_ZIP_BYTES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/zipped_typeshed.zip"));
