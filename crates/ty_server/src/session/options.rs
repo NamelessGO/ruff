@@ -31,6 +31,7 @@ impl GlobalOptions {
                 .and_then(|python| python.ty)
                 .and_then(|ty| ty.disable_language_services)
                 .unwrap_or_default(),
+            diagnostic_mode: self.client.diagnostic_mode.unwrap_or_default(),
         }
     }
 }
@@ -54,6 +55,26 @@ pub(crate) struct ClientOptions {
     /// Settings under the `python.*` namespace in VS Code that are useful for the ty language
     /// server.
     python: Option<Python>,
+    /// Diagnostic mode for the language server.
+    diagnostic_mode: Option<DiagnosticMode>,
+}
+
+/// Diagnostic mode for the language server.
+#[derive(Clone, Copy, Debug, Default, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum DiagnosticMode {
+    /// Check only currently open files.
+    #[default]
+    OpenFilesOnly,
+    /// Check all files in the workspace.
+    Workspace,
+}
+
+impl DiagnosticMode {
+    pub(crate) fn is_workspace(self) -> bool {
+        matches!(self, DiagnosticMode::Workspace)
+    }
 }
 
 // TODO(dhruvmanila): We need to mirror the "python.*" namespace on the server side but ideally it
