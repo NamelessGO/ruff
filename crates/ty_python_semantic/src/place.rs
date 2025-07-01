@@ -244,9 +244,8 @@ pub(crate) fn class_symbol<'db>(
                 ConsideredDefinitions::EndOfScope,
             );
 
-            if symbol_and_quals.is_class_var() {
-                // For declared class vars we do not need to check if they have bindings,
-                // we just trust the declaration.
+            if !symbol_and_quals.place.is_unbound() {
+                // For declared class-level variables, we simply trust the declared type.
                 return symbol_and_quals;
             }
 

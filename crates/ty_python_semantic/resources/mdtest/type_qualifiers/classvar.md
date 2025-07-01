@@ -78,7 +78,6 @@ reveal_type(Derived.a)  # revealed: int
 
 d = Derived()
 
-# error: [invalid-attribute-access]
 d.a = 2
 ```
 
